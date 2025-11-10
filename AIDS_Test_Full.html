@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIDS Knowledge English Class Test</title>
+    <!-- 引入图表与数据导出依赖库（无需本地文件，联网即可加载） -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        }
+
+        body {
+            background-color: #fff;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        header h1 {
+            font-size: 24px;
+            color: #1E90FF;
+        }
+
+        /* 导航按钮样式 */
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background-color: #1E90FF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background-color: #0066CC;
+        }
+
+        /* 模块切换样式 */
+        .module {
+            display: none;
+        }
+
+        .module.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 登录模块样式 */
+        .login-form {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #1E90FF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .submit-btn:hover {
+            background-color: #0066CC;
+        }
+
+        /* 测试模块样式 */
+        .question-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .student-info {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .question-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .question-text {
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .option-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #1E90FF;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #333;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-btn.selected {
+            background-color: #1E90FF;
+            color: white;
+        }
+
+        .feedback {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 25px;
+            min-height: 24px;
+        }
+
+        .question-nav {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 得分弹窗样式 */
+        .score-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #1E90FF;
+        }
+
+        .modal-content p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        /* 统计模块样式 */
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .class-filter {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1E90FF;
+        }
+
+        /* 可视化模块样式 */
+        .analysis-report {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .report-title {
+            font-size: 18px;
+            color: #1E90FF;
+            margin-bottom: 15px;
+        }
+
+        .improvement-areas h4 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-wrapper {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 300px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1E90FF;
+        }
+
+        .chart-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .chart-action-btn {
+            padding: 8px 12px;
+            background-color: #1E90FF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .chart-action-btn:hover {
+            background-color: #0066CC;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .options {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .question-nav {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-action-btn {
+                width: 100%;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 20px;
+            }
+
+            .nav {
+                flex-direction: column;
+            }
+
+            .nav-btn {
+                width: 100%;
+            }
+
+            .question-container, .login-form, .chart-wrapper {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AIDS Knowledge English Test</h1>
+    </header>
+
+    <!-- 导航栏 -->
+    <div class="nav">
+        <button class="nav-btn" id="loginNavBtn" data-module="login">Login</button>
+        <button class="nav-btn" id="testNavBtn" data-module="test" disabled>Test</button>
+        <button class="nav-btn" id="statsNavBtn" data-module="statistics" disabled>Statistics</button>
+        <button class="nav-btn" id="visualNavBtn" data-module="visualization" disabled>Analysis & Charts</button>
+    </div>
+
+    <!-- 1. 登录模块 -->
+    <div class="module" id="loginModule">
+        <div class="login-form">
+            <h2>Student Login</h2>
+            <div class="form-group">
+                <label for="classInput">Class (e.g., Class 1)</label>
+                <input type="text" id="classInput" placeholder="Enter your class">
+            </div>
+            <div class="form-group">
+                <label for="studentIdInput">Student ID (4-20 chars: numbers, letters, '-', '_')</label>
+                <input type="text" id="studentIdInput" placeholder="Enter your student ID">
+            </div>
+            <button class="submit-btn" id="loginBtn">Login & Start Test</button>
+        </div>
+    </div>
+
+    <!-- 2. 测试模块 -->
+    <div class="module" id="testModule">
+        <div class="question-container">
+            <div class="student-info" id="studentInfo"></div>
+            <div class="question-title" id="questionTitle">Question 1/6</div>
+            <div class="question-text" id="questionText">
+                HIV is the virus that causes AIDS, and anyone, not just homosexuals, could be at risk.
+            </div>
+            <div class="options">
+                <button class="option-btn" data-answer="true">True (T)</button>
+                <button class="option-btn" data-answer="false">False (F)</button>
+            </div>
+            <div class="feedback" id="feedback"></div>
+            <div class="question-nav">
+                <button class="nav-btn" id="prevBtn" disabled>Previous Question</button>
+                <button class="nav-btn" id="nextBtn">Next Question</button>
+            </div>
+        </div>
+
+        <!-- 得分弹窗 -->
+        <div class="score-modal" id="scoreModal">
+            <div class="modal-content">
+                <h2>Test Completed!</h2>
+                <p id="scoreText">You scored 4/6!</p>
+                <button class="submit-btn" id="viewStatsBtn">View Statistics</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 统计模块 -->
+    <div class="module" id="statisticsModule">
+        <div class="stats-header">
+            <div>
+                <label for="classFilter">Filter by Class:</label>
+                <select class="class-filter" id="classFilter">
+                    <option value="all">All Classes</option>
+                </select>
+            </div>
+            <button class="submit-btn" id="exportBtn">Export Data to Excel</button>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h3>Total Students</h3>
+                <div class="value" id="totalStudents">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Average Score</h3>
+                <div class="value" id="averageScore">0.0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Highest Score</h3>
+                <div class="value" id="highestScore">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Lowest Score</h3>
+                <div class="value" id="lowestScore">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 可视化与分析模块 -->
+    <div class="module" id="visualizationModule">
+        <!-- 答案分析报告 -->
+        <div class="analysis-report">
+            <div class="report-title">Key Improvement Areas (Based on Test Data)</div>
+            <div class="improvement-areas">
+                <h4>Need More Practice On:</h4>
+                <p id="improvementText">No test data yet. Please have students complete the test first.</p>
+            </div>
+        </div>
+
+        <!-- 图表容器 -->
+        <div class="charts-container">
+            <!-- 单题正确率柱状图 -->
+            <div class="chart-wrapper">
+                <div class="chart-title">Question Correct Rate (%)</div>
+                <canvas id="correctRateChart"></canvas>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" id="downloadRateChart">Download Chart</button>
+                </div>
+            </div>
+
+            <!-- 班级平均分条形图 -->
+            <div class="chart-wrapper">
+                <div class="chart-title">Class Average Score</div>
+                <canvas id="classAvgChart"></canvas>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" id="downloadAvgChart">Download Chart</button>
+                </div>
+            </div>
+
+            <!-- 错误分布饼图 -->
+            <div class="chart-wrapper">
+                <div class="chart-title">Incorrect Answers Distribution</div>
+                <canvas id="errorDistChart"></canvas>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" id="downloadDistChart">Download Chart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. 应用状态管理
+        const appState = {
+            currentUser: null,          // 当前登录用户
+            currentQuestion: 0,         // 当前题目索引
+            testData: [],               // 所有学生答题数据（本地存储）
+            questions: [                // 题目库（含正确答案与解析）
+                {
+                    text: "HIV is the virus that causes AIDS, and anyone, not just homosexuals, could be at risk.",
+                    correctAnswer: true,
+                    feedback: "Correct! HIV (Human Immunodeficiency Virus) causes AIDS, and people of all groups are at risk, not just homosexuals."
+                },
+                {
+                    text: "People can prevent HIV and AIDS by getting a vaccine.",
+                    correctAnswer: false,
+                    feedback: "Correct! There is no effective HIV vaccine yet. HIV mutates easily, making vaccine development difficult."
+                },
+                {
+                    text: "HIV is difficult to detect immediately after it is passed to someone.",
+                    correctAnswer: true,
+                    feedback: "Correct! HIV has an incubation period (14-21 days, up to 3 months) before antibodies are detectable."
+                },
+                {
+                    text: "HIV is passed on in body fluids (blood or semen) from an infected person.",
+                    correctAnswer: true,
+                    feedback: "Correct! HIV spreads via infected blood, sexual fluids, or from mother to child during pregnancy/delivery."
+                },
+                {
+                    text: "The virus can be spread by casual contact with people who are HIV-infected, such as handshaking or drinking from the same cup.",
+                    correctAnswer: false,
+                    feedback: "Correct! HIV is not spread through casual contact. Saliva has low HIV concentration and chemicals that kill the virus."
+                },
+                {
+                    text: "Cats, dogs, and other domestic animals are not a source of infection, but transmission by insects, such as mosquitoes, is a means by which the virus can be acquired.",
+                    correctAnswer: false,
+                    feedback: "Correct! There are no known cases of HIV transmission by domestic animals or insects like mosquitoes."
+                }
+            ],
+            charts: {                   // 图表实例存储
+                correctRateChart: null,
+                classAvgChart: null,
+                errorDistChart: null
+            }
+        };
+
+        // 2. DOM元素获取
+        const dom = {
+            // 导航相关
+            navBtns: document.querySelectorAll('.nav-btn[data-module]'),
+            modules: document.querySelectorAll('.module'),
+            loginNavBtn: document.getElementById('loginNavBtn'),
+            testNavBtn: document.getElementById('testNavBtn'),
+            statsNavBtn: document.getElementById('statsNavBtn'),
+            visualNavBtn: document.getElementById('visualNavBtn'),
+            
+            // 登录模块
+            classInput: document.getElementById('classInput'),
+            studentIdInput: document.getElementById('studentIdInput'),
+            loginBtn: document.getElementById('loginBtn'),
+            
+            // 测试模块
+            studentInfo: document.getElementById('studentInfo'),
+            questionTitle: document.getElementById('questionTitle'),
+            questionText: document.getElementById('questionText'),
+            optionBtns: document.querySelectorAll('.option-btn'),
+            feedback: document.getElementById('feedback'),
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            scoreModal: document.getElementById('scoreModal'),
+            scoreText: document.getElementById('scoreText'),
+            viewStatsBtn: document.getElementById('viewStatsBtn'),
+            
+            // 统计模块
+            classFilter: document.getElementById('classFilter'),
+            exportBtn: document.getElementById('exportBtn'),
+            totalStudents: document.getElementById('totalStudents'),
+            averageScore: document.getElementById('averageScore'),
+            highestScore: document.getElementById('highestScore'),
+            lowestScore: document.getElementById('lowestScore'),
+            
+            // 可视化模块
+            improvementText: document.getElementById('improvementText'),
+            correctRateChart: document.getElementById('correctRateChart'),
+            classAvgChart: document.getElementById('classAvgChart'),
+            errorDistChart: document.getElementById('errorDistChart'),
+            downloadRateChart: document.getElementById('downloadRateChart'),
+            downloadAvgChart: document.getElementById('downloadAvgChart'),
+            downloadDistChart: document.getElementById('downloadDistChart')
+        };
+
+        // 3. 初始化函数（页面加载时执行）
+        function initApp() {
+            // 从本地存储加载历史数据
+            loadTestDataFromLocalStorage();
+            
+            // 初始化模块切换
+            initModuleNavigation();
+            
+            // 初始化各模块功能
+            initLoginModule();
+            initTestModule();
+            initStatisticsModule();
+            initVisualizationModule();
+        }
+
+        // 4. 本地存储操作（数据持久化）
+        function loadTestDataFromLocalStorage() {
+            const savedData = localStorage.getItem('aidsTestData');
+            if (savedData) {
+                appState.testData = JSON.parse(savedData);
+            }
+            // 更新班级筛选下拉框
+            updateClassFilterOptions();
+        }
+
+        function saveTestDataToLocalStorage() {
+            localStorage.setItem('aidsTestData', JSON.stringify(appState.testData));
+            // 同步更新统计和图表
+            updateStatisticsModule();
+            updateVisualizationModule();
+            updateClassFilterOptions();
+        }
+
+        // 5. 模块切换功能
+        function initModuleNavigation() {
+            dom.navBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetModule = btn.getAttribute('data-module');
+                    switchToModule(targetModule);
+                });
+            });
+        }
+
+        function switchToModule(moduleName) {
+            // 隐藏所有模块
+            dom.modules.forEach(module => {
+                module.classList.remove('active');
+            });
+            // 显示目标模块
+            document.getElementById(`${moduleName}Module`).classList.add('active');
+            
+            // 高亮当前导航按钮
+            dom.navBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-module') === moduleName);
+            });
+        }
+
+        // 6. 登录模块功能
+        function initLoginModule() {
+            dom.loginBtn.addEventListener('click', handleLogin);
+            
+            // 回车键触发登录
+            dom.classInput.addEventListener('keypress', (e) => e.key === 'Enter' && dom.studentIdInput.focus());
+            dom.studentIdInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleLogin());
+        }
+
+        function handleLogin() {
+            const className = dom.classInput.value.trim();
+            const studentId = dom.studentIdInput.value.trim();
+            const idRegex = /^[a-zA-Z0-9_\-]{4,20}$/; // 学号格式校验
+            
+            // 基础格式校验
+            if (!className || !studentId) {
+                alert('Please enter both class and student ID!');
+                return;
+            }
+            if (!idRegex.test(studentId)) {
+                alert('Student ID must be 4-20 characters (only numbers, letters, "-", "_")!');
+                return;
+            }
+            
+            // 检查学号是否已存在（避免重复提交）
+            const existingUser = appState.testData.find(user => user.studentId === studentId);
+            if (existingUser && !confirm(`Student ID "${studentId}" already submitted. Overwrite data?`)) {
+                return;
+            }
+            
+            // 登录成功：初始化当前用户
+            appState.currentUser = {
+                className,
+                studentId,
+                answers: Array(appState.questions.length).fill(null), // 存储每道题答案
+                score: 0,
+                submitTime: null
+            };
+            appState.currentQuestion = 0;
+            
+            // 更新UI：显示用户信息、加载第一题
+            dom.studentInfo.textContent = `Class: ${className} | Student ID: ${studentId}`;
+            loadCurrentQuestion();
+            
+            // 启用导航按钮
+            dom.testNavBtn.disabled = false;
+            dom.statsNavBtn.disabled = false;
+            dom.visualNavBtn.disabled = false;
+            
+            // 切换到测试模块
+            switchToModule('test');
+        }
+
+        // 7. 测试模块功能
+        function initTestModule() {
+            // 选项按钮点击事件（选择答案）
+            dom.optionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const selectedAnswer = btn.getAttribute('data-answer') === 'true';
+                    // 保存当前题答案
+                    appState.currentUser.answers[appState.currentQuestion] = selectedAnswer;
+                    // 更新UI：高亮选中选项、显示解析
+                    dom.optionBtns.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    dom.feedback.textContent = appState.questions[appState.currentQuestion].feedback;
+                });
+            });
+            
+            // 上一题按钮
+            dom.prevBtn.addEventListener('click', () => {
+                if (appState.currentQuestion > 0) {
+                    appState.currentQuestion--;
+                    loadCurrentQuestion();
+                }
+            });
+            
+            // 下一题/提交按钮
+            dom.nextBtn.addEventListener('click', () => {
+                // 检查当前题是否已选择答案
+                if (appState.currentUser.answers[appState.currentQuestion] === null) {
+                    alert('Please select an answer before proceeding!');
+                    return;
+                }
+                
+                // 判断是否为最后一题（提交测试）
+                if (appState.currentQuestion === appState.questions.length - 1) {
+                    submitTest();
+                } else {
+                    appState.currentQuestion++;
+                    loadCurrentQuestion();
+                }
+            });
+            
+            // 得分弹窗：查看统计按钮
+            dom.viewStatsBtn.addEventListener('click', () => {
+                dom.scoreModal.style.display = 'none';
+                switchToModule('statistics');
+            });
+        }
+
+        // 加载当前题目内容
+        function loadCurrentQuestion() {
+            const currentQ = appState.questions[appState.currentQuestion];
+            // 更新题目标题和内容
+            dom.questionTitle.textContent = `Question ${appState.currentQuestion + 1}/${appState.questions.length}`;
+            dom.questionText.textContent = currentQ.text;
+            
+            // 重置选项和解析
+            dom.optionBtns.forEach(btn => {
+                btn.classList.remove('selected');
+                // 恢复已选答案（如果有）
+                const btnAnswer = btn.getAttribute('data-answer') === 'true';
+                if (appState.currentUser.answers[appState.currentQuestion] === btnAnswer) {
+                    btn.classList.add('selected');
+                }
+            });
+            
+            // 显示解析（如果已选答案）
+            dom.feedback.textContent = appState.currentUser.answers[appState.currentQuestion] !== null 
+                ? currentQ.feedback 
+                : '';
+            
+            // 更新按钮状态
+            dom.prevBtn.disabled = appState.currentQuestion === 0;
+            dom.nextBtn.textContent = appState.currentQuestion === appState.questions.length - 1 
+                ? 'Submit Test' 
+                : 'Next Question';
+        }
+
+        // 提交测试（计算得分并保存数据）
+        function submitTest() {
+            // 计算得分
+            let correctCount = 0;
+            appState.currentUser.answers.forEach((answer, index) => {
+                if (answer === appState.questions[index].correctAnswer) {
+                    correctCount++;
+                }
+            });
+            appState.currentUser.score = correctCount;
+            appState.currentUser.submitTime = new Date().toLocaleString();
+            
+            // 更新测试数据（覆盖或新增）
+            const userIndex = appState.testData.findIndex(u => u.studentId === appState.currentUser.studentId);
+            if (userIndex > -1) {
+                appState.testData[userIndex] = appState.currentUser;
+            } else {
+                appState.testData.push(appState.currentUser);
+            }
+            
+            // 保存数据并显示得分弹窗
+            saveTestDataToLocalStorage();
+            dom.scoreText.textContent = `You scored ${correctCount}/${appState.questions.length}!`;
+            dom.scoreModal.style.display = 'flex';
+        }
+
+        // 8. 统计模块功能
+        function initStatisticsModule() {
+            // 导出Excel按钮
+            dom.exportBtn.addEventListener('click', exportTestDataToExcel);
+            
+            // 班级筛选下拉框变化
+            dom.classFilter.addEventListener('change', updateStatisticsModule);
+            
+            // 初始加载统计数据
+            updateStatisticsModule();
+        }
+
+        // 更新班级筛选下拉框选项
+        function updateClassFilterOptions() {
+            // 获取所有不重复的班级名称
+            const classNames = [...new Set(appState.testData.map(user => user.className))].sort();
+            // 清空现有选项（保留"All Classes"）
+            while (dom.classFilter.options.length > 1) {
+                dom.classFilter.remove(1);
+            }
+            // 添加班级选项
+            classNames.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                dom.classFilter.appendChild(option);
+            });
+        }
+
+        // 更新统计模块数据
+        function updateStatisticsModule() {
+            const selectedClass = dom.classFilter.value;
+            // 筛选当前班级的数据（或全部）
+            const filteredData = selectedClass === 'all' 
+                ? appState.testData 
+                : appState.testData.filter(user => user.className === selectedClass);
+            
+            const total = filteredData.length;
+            if (total === 0) {
+                // 无数据时重置统计
+                dom.totalStudents.textContent = '0';
+                dom.averageScore.textContent = '0.0';
+                dom.highestScore.textContent = '0';
+                dom.lowestScore.textContent = '0';
+                return;
+            }
+            
+            // 计算统计指标
+            const totalScores = filteredData.reduce((sum, user) => sum + user.score, 0);
+            const average = (totalScores / total).toFixed(1);
+            const highest = Math.max(...filteredData.map(user => user.score));
+            const lowest = Math.min(...filteredData.map(user => user.score));
+            
+            // 更新UI
+            dom.totalStudents.textContent = total;
+            dom.averageScore.textContent = average;
+            dom.highestScore.textContent = highest;
+            dom.lowestScore.textContent = lowest;
+        }
+
+        // 导出数据到Excel
+        function exportTestDataToExcel() {
+            const selectedClass = dom.classFilter.value;
+            const filteredData = selectedClass === 'all' 
+                ? appState.testData 
+                : appState.testData.filter(user => user.className === selectedClass);
+            
+            if (filteredData.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+            
+            // 准备Excel数据结构
+            const excelData = [
+                ['Class', 'Student ID', 'Score', 'Total Questions', 'Submit Time'] // 表头
+            ];
+            // 填充学生数据
+            filteredData.forEach(user => {
+                excelData.push([
+                    user.className,
+                    user.studentId,
+                    user.score,
+                    appState.questions.length,
+                    user.submitTime
+                ]);
+            });
+            
+            // 生成Excel文件
+            const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'AIDS Test Data');
+            
+            // 下载文件（按班级命名）
+            const fileName = selectedClass === 'all' 
+                ? `AIDS_Test_All_Classes_${new Date().toLocaleDateString()}.xlsx`
+                : `AIDS_Test_${selectedClass}_${new Date().toLocaleDateString()}.xlsx`;
+            
+            XLSX.writeFile(workbook, fileName);
+            alert('Data exported successfully!');
+        }
+
+        // 9. 可视化与分析模块功能
+        function initVisualizationModule() {
+            // 初始化图表
+            updateVisualizationModule();
+            
+            // 图表下载按钮
+            dom.downloadRateChart.addEventListener('click', () => downloadChart(dom.correctRateChart, 'question_correct_rate.png'));
+            dom.downloadAvgChart.addEventListener('click', () => downloadChart(dom.classAvgChart, 'class_average_score.png'));
+            dom.downloadDistChart.addEventListener('click', () => downloadChart(dom.errorDistChart, 'incorrect_answers_distribution.png'));
+        }
+
+        // 更新可视化模块（图表+答案分析）
+        function updateVisualizationModule() {
+            const selectedClass = dom.classFilter.value;
+            const filteredData = selectedClass === 'all' 
+                ? appState.testData 
+                : appState.testData.filter(user => user.className === selectedClass);
+            
+            if (filteredData.length === 0) {
+                dom.improvementText.textContent = 'No test data yet. Please have students complete the test first.';
+                // 清空图表
+                clearAllCharts();
+                return;
+            }
+            
+            // 1. 更新答案分析报告
+            updateImprovementAnalysis(filteredData);
+            
+            // 2. 更新图表
+            renderCorrectRateChart(filteredData);
+            renderClassAvgChart(filteredData);
+            renderErrorDistChart(filteredData);
+        }
+
+        // 生成答案分析报告（薄弱知识点）
+        function updateImprovementAnalysis(filteredData) {
+            const totalStudents = filteredData.length;
+            const lowRateQuestions = []; // 正确率低于60%的题目
+            
+            // 计算每道题的正确率
+            appState.questions.forEach((q, index) => {
+                const correctCount = filteredData.reduce((sum, user) => {
+                    return user.answers[index] === q.correctAnswer ? sum + 1 : sum;
+                }, 0);
+                const correctRate = (correctCount / totalStudents) * 100;
+                
+                if (correctRate < 60) {
+                    // 记录薄弱知识点
+                    const topic = getQuestionTopic(index);
+                    lowRateQuestions.push(`Question ${index + 1} (${correctRate.toFixed(1)}% correct) - ${topic}`);
+                }
+            });
+            
+            // 更新分析文本
+            if (lowRateQuestions.length === 0) {
+                dom.improvementText.textContent = 'Great! All questions have a correct rate above 60%. Students have a good understanding of AIDS knowledge.';
+            } else {
+                dom.improvementText.textContent = `Need more practice on: \n${lowRateQuestions.join('\n')}`;
+            }
+        }
+
+        // 获取题目对应的知识点（用于分析报告）
+        function getQuestionTopic(questionIndex) {
+            const topics = [
+                'HIV basic knowledge (cause of AIDS & risk groups)',
+                'HIV vaccine availability',
+                'HIV detection window period',
+                'HIV transmission via body fluids',
+                'HIV transmission via casual contact',
+                'HIV transmission via animals/insects'
+            ];
+            return topics[questionIndex];
+        }
+
+        // 渲染「单题正确率柱状图」
+        function renderCorrectRateChart(filteredData) {
+            const totalStudents = filteredData.length;
+            // 计算每道题的正确率
+            const correctRates = appState.questions.map((q, index) => {
+                const correctCount = filteredData.reduce((sum, user) => {
+                    return user.answers[index] === q.correctAnswer ? sum + 1 : sum;
+                }, 0);
+                return Math.round((correctCount / totalStudents) * 100);
+            });
+            
+            // 销毁旧图表（避免重复渲染）
+            if (appState.charts.correctRateChart) {
+                appState.charts.correctRateChart.destroy();
+            }
+            
+            // 创建新图表
+            appState.charts.correctRateChart = new Chart(dom.correctRateChart, {
+                type: 'bar',
+                data: {
+                    labels: appState.questions.map((_, i) => `Q${i + 1}`),
+                    datasets: [{
+                        label: 'Correct Rate (%)',
+                        data: correctRates,
+                        backgroundColor: 'rgba(30, 144, 255, 0.7)',
+                        borderColor: 'rgba(30, 144, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Correct Rate (%)' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Question Number' }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `Correct Rate: ${context.raw}%`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染「班级平均分条形图」
+        function renderClassAvgChart(filteredData) {
+            // 按班级分组计算平均分
+            const classScores = {};
+            filteredData.forEach(user => {
+                if (!classScores[user.className]) {
+                    classScores[user.className] = { total: 0, count: 0 };
+                }
+                classScores[user.className].total += user.score;
+                classScores[user.className].count++;
+            });
+            
+            // 准备图表数据
+            const classNames = Object.keys(classScores);
+            const avgScores = classNames.map(cls => {
+                return (classScores[cls].total / classScores[cls].count).toFixed(1);
+            });
+            
+            // 销毁旧图表
+            if (appState.charts.classAvgChart) {
+                appState.charts.classAvgChart.destroy();
+            }
+            
+            // 创建新图表
+            appState.charts.classAvgChart = new Chart(dom.classAvgChart, {
+                type: 'bar',
+                data: {
+                    labels: classNames,
+                    datasets: [{
+                        label: 'Average Score',
+                        data: avgScores,
+                        backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: appState.questions.length,
+                            title: { display: true, text: `Average Score (0-${appState.questions.length})` }
+                        },
+                        x: {
+                            title: { display: true, text: 'Class' }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `Average Score: ${context.raw}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染「错误分布饼图」
+        function renderErrorDistChart(filteredData) {
+            // 计算每道题的错误次数
+            const errorCounts = appState.questions.map((q, index) => {
+                return filteredData.reduce((sum, user) => {
+                    return user.answers[index] !== q.correctAnswer ? sum + 1 : sum;
+                }, 0);
+            });
+            
+            // 过滤无错误的题目（不显示在饼图中）
+            const labels = [];
+            const data = [];
+            const colors = [];
+            errorCounts.forEach((count, index) => {
+                if (count > 0) {
+                    labels.push(`Q${index + 1}`);
+                    data.push(count);
+                    // 生成随机颜色（区分不同题目）
+                    colors.push(`rgba(${Math.floor(Math.random() * 200) + 50}, ${Math.floor(Math.random() * 200) + 50}, ${Math.floor(Math.random() * 200) + 50}, 0.7)`);
+                }
+            });
+            
+            // 销毁旧图表
+            if (appState.charts.errorDistChart) {
+                appState.charts.errorDistChart.destroy();
+            }
+            
+            // 创建新图表（无错误数据时显示提示）
+            if (data.length === 0) {
+                appState.charts.errorDistChart = new Chart(dom.errorDistChart, {
+                    type: 'pie',
+                    data: {
+                        labels: ['No Incorrect Answers'],
+                        datasets: [{ data: [1], backgroundColor: ['#ccc'] }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: { enabled: false },
+                            legend: { display: false }
+                        }
+                    }
+                });
+            } else {
+                appState.charts.errorDistChart = new Chart(dom.errorDistChart, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderColor: colors.map(c => c.replace('0.7', '1')),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `Q${context.label.slice(1)}: ${context.raw} incorrect`
+                                }
+                            },
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const total = data.reduce((sum, val) => sum + val, 0);
+                                            const percentage = Math.round((context.raw / total) * 100);
+                                            return `${context.label}: ${context.raw} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 清空所有图表
+        function clearAllCharts() {
+            Object.values(appState.charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            appState.charts = { correctRateChart: null, classAvgChart: null, errorDistChart: null };
+        }
+
+        // 下载图表为图片
+        function downloadChart(chartCanvas, fileName) {
+            try {
+                // 转换图表为图片URL
+                const imageURL = chartCanvas.toDataURL('image/png');
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.href = imageURL;
+                link.download = fileName;
+                // 触发下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                alert(`Chart downloaded as ${fileName}!`);
+            } catch (error) {
+                alert('Failed to download chart. Please try again!');
+                console.error('Chart download error:', error);
+            }
+        }
+
+        // 10. 页面加载完成后初始化应用
+        window.addEventListener('load', initApp);
+    </script>
+</body>
+</html>
