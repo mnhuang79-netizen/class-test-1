@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple AIDS Knowledge Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { padding: 20px; max-width: 800px; margin: 0 auto; }
+        .module { display: none; margin-top: 30px; }
+        .module.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { padding: 12px 20px; background: #1E90FF; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        .btn:hover { background: #0066CC; }
+        .question { margin-bottom: 30px; }
+        .options { display: flex; gap: 15px; margin: 20px 0; }
+        .option-btn { flex: 1; padding: 15px; border: 2px solid #1E90FF; border-radius: 5px; background: white; color: #333; font-size: 16px; cursor: pointer; }
+        .option-btn.selected { background: #1E90FF; color: white; }
+        .feedback { color: #666; margin: 10px 0; }
+        .score-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 500px; width: 90%; }
+    </style>
+</head>
+<body>
+    <h1>AIDS Knowledge English Test</h1>
+    <button class="btn" data-module="login">Login</button>
+    <button class="btn" data-module="test" disabled>Test</button>
+
+    <!-- Login Module -->
+    <div class="module" id="loginModule">
+        <h2>Student Login</h2>
+        <div class="form-group">
+            <label>Class (e.g., Class 1)</label>
+            <input type="text" id="classInput" placeholder="Enter your class">
+        </div>
+        <div class="form-group">
+            <label>Student ID (4-20 chars: numbers, letters, '-', '_')</label>
+            <input type="text" id="studentIdInput" placeholder="Enter your ID">
+        </div>
+        <button class="btn" id="loginBtn">Login & Start</button>
+    </div>
+
+    <!-- Test Module -->
+    <div class="module" id="testModule">
+        <div id="studentInfo"></div>
+        <div class="question" id="questionContainer">
+            <h3 id="questionTitle">Question 1/6</h3>
+            <p id="questionText">HIV is the virus that causes AIDS, and anyone, not just homosexuals, could be at risk.</p>
+            <div class="options">
+                <button class="option-btn" data-answer="true">True (T)</button>
+                <button class="option-btn" data-answer="false">False (F)</button>
+            </div>
+            <div class="feedback" id="feedback"></div>
+            <button class="btn" id="prevBtn" disabled>Previous</button>
+            <button class="btn" id="nextBtn">Next</button>
+        </div>
+
+        <!-- Score Modal -->
+        <div class="score-modal" id="scoreModal">
+            <div class="modal-content">
+                <h2>Test Completed!</h2>
+                <p id="scoreText">You scored 4/6!</p>
+                <button class="btn" id="closeModalBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple app state
+        const state = {
+            currentModule: 'login',
+            user: null,
+            currentQ: 0,
+            answers: [],
+            questions: [
+                {text: "HIV is the virus that causes AIDS, and anyone, not just homosexuals, could be at risk.", correct: true, feedback: "Correct! HIV causes AIDS for all groups."},
+                {text: "People can prevent HIV and AIDS by getting a vaccine.", correct: false, feedback: "Correct! No HIV vaccine exists yet."},
+                {text: "HIV is difficult to detect immediately after infection.", correct: true, feedback: "Correct! HIV has a detection window period."},
+                {text: "HIV is passed on in body fluids (blood or semen) from an infected person.", correct: true, feedback: "Correct! HIV spreads via infected body fluids."},
+                {text: "HIV can be spread by handshaking or sharing a cup.", correct: false, feedback: "Correct! No spread via casual contact."},
+                {text: "Mosquitoes can spread HIV.", correct: false, feedback: "Correct! No insect transmission of HIV."}
+            ]
+        };
+
+        // DOM Elements
+        const navBtns = document.querySelectorAll('[data-module]');
+        const modules = document.querySelectorAll('.module');
+        const classInput = document.getElementById('classInput');
+        const studentIdInput = document.getElementById('studentIdInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const studentInfo = document.getElementById('studentInfo');
+        const questionTitle = document.getElementById('questionTitle');
+        const questionText = document.getElementById('questionText');
+        const optionBtns = document.querySelectorAll('.option-btn');
+        const feedback = document.getElementById('feedback');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const scoreModal = document.getElementById('scoreModal');
+        const scoreText = document.getElementById('scoreText');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        // Navigation
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const module = btn.getAttribute('data-module');
+                switchModule(module);
+            });
+        });
+
+        function switchModule(module) {
+            state.currentModule = module;
+            modules.forEach(m => m.classList.remove('active'));
+            document.getElementById(`${module}Module`).classList.add('active');
+            navBtns.forEach(btn => {
+                if (btn.getAttribute('data-module') === module) btn.disabled = false;
+                else if (module !== 'login') btn.disabled = !state.user;
+            });
+        }
+
+        // Login
+        loginBtn.addEventListener('click', () => {
+            const className = classInput.value.trim();
+            const studentId = studentIdInput.value.trim();
+            const idRegex = /^[a-zA-Z0-9_\-]{4,20}$/;
+
+            if (!className || !studentId || !idRegex.test(studentId)) {
+                alert('Please enter valid class and student ID (4-20 chars: numbers, letters, "-", "_")');
+                return;
+            }
+
+            state.user = { className, studentId };
+            state.answers = Array(state.questions.length).fill(null);
+            studentInfo.textContent = `Class: ${className} | ID: ${studentId}`;
+            loadQuestion();
+            switchModule('test');
+        });
+
+        // Load Question
+        function loadQuestion() {
+            const q = state.questions[state.currentQ];
+            questionTitle.textContent = `Question ${state.currentQ + 1}/${state.questions.length}`;
+            questionText.textContent = q.text;
+            optionBtns.forEach(btn => btn.classList.remove('selected'));
+            feedback.textContent = state.answers[state.currentQ] !== null ? q.feedback : '';
+            prevBtn.disabled = state.currentQ === 0;
+            nextBtn.textContent = state.currentQ === state.questions.length - 1 ? 'Submit' : 'Next';
+        }
+
+        // Option Selection
+        optionBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const answer = btn.getAttribute('data-answer') === 'true';
+                state.answers[state.currentQ] = answer;
+                optionBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                feedback.textContent = state.questions[state.currentQ].feedback;
+            });
+        });
+
+        // Next/Previous
+        prevBtn.addEventListener('click', () => {
+            if (state.currentQ > 0) {
+                state.currentQ--;
+                loadQuestion();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (state.answers[state.currentQ] === null) {
+                alert('Please select an answer first');
+                return;
+            }
+
+            if (state.currentQ === state.questions.length - 1) {
+                const score = state.answers.reduce((sum, ans, i) => sum + (ans === state.questions[i].correct ? 1 : 0), 0);
+                scoreText.textContent = `You scored ${score}/${state.questions.length}!`;
+                scoreModal.style.display = 'flex';
+            } else {
+                state.currentQ++;
+                loadQuestion();
+            }
+        });
+
+        // Close Modal
+        closeModalBtn.addEventListener('click', () => {
+            scoreModal.style.display = 'none';
+        });
+
+        // Initial load
+        switchModule('login');
+    </script>
+</body>
+</html>
